@@ -1,5 +1,8 @@
 package com.me.hannah.spreadsheet;
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -10,17 +13,28 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 
 public class SpreadsheetActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        SpreadsheetFragment.OnFragmentInteractionListener {
+
+
+    private TableLayout _tableLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_spreadsheet);
+
+        View contentView = getView();
+        setContentView(contentView);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -43,6 +57,31 @@ public class SpreadsheetActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    @NonNull
+    private View getView() {
+        View contentView = LayoutInflater.from(this).inflate(R.layout.activity_spreadsheet, null);
+        _tableLayout = (TableLayout) contentView.findViewById(R.id.tableLayout);
+        for (int i = 0; i < 4; i++) {
+            TableRow row = new TableRow(this);
+            row.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END | LinearLayout.SHOW_DIVIDER_MIDDLE);
+            row.setDividerDrawable(new ColorDrawable(Color.GRAY));
+            for (int j = 0; j < 4; j++) {
+                EditText t = new EditText(this);
+                t.setMinWidth(150);
+                row.addView(t);
+            }
+            _tableLayout.addView(row);
+        }
+        _tableLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END | LinearLayout.SHOW_DIVIDER_MIDDLE);
+        _tableLayout.setDividerDrawable(new ColorDrawable(Color.GRAY));
+        return contentView;
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -53,28 +92,6 @@ public class SpreadsheetActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.spreadsheet, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -82,15 +99,27 @@ public class SpreadsheetActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_clear) {
-            // Handle the camera action
+            clear();
         } else if (id == R.id.nav_reload) {
-
+            reload();
         } else if (id == R.id.nav_save) {
-
+            save();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void clear() {
+
+    }
+
+    private void reload() {
+
+    }
+
+    private void save() {
+
     }
 }
