@@ -13,6 +13,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,13 +21,20 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.TextView;
 
 public class SpreadsheetActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         SpreadsheetFragment.OnFragmentInteractionListener {
 
-
+    private String[][] _model = new String[][]{
+            new String[]{"A1", "A2", "A3", "A4"},
+            new String[]{"B1", "B2", "B3", "B4"},
+            new String[]{"C1", "C2", "C3", "C4"},
+            new String[]{"D1", "D2", "D3", "D4"},
+    };
     private TableLayout _tableLayout;
+    private EditText _editText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +68,22 @@ public class SpreadsheetActivity extends AppCompatActivity
     @NonNull
     private View getView() {
         View contentView = LayoutInflater.from(this).inflate(R.layout.activity_spreadsheet, null);
+        _editText = (EditText) contentView.findViewById(R.id.editText);
         _tableLayout = (TableLayout) contentView.findViewById(R.id.tableLayout);
         for (int i = 0; i < 4; i++) {
             TableRow row = new TableRow(this);
             row.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END | LinearLayout.SHOW_DIVIDER_MIDDLE);
             row.setDividerDrawable(new ColorDrawable(Color.GRAY));
             for (int j = 0; j < 4; j++) {
-                EditText t = new EditText(this);
+                TextView t = new TextView(this);
+                t.setClickable(true);
+                final int x = i, y = j;
+                t.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        editCell(x, y);
+                    }
+                });
                 t.setMinWidth(150);
                 row.addView(t);
             }
@@ -75,6 +92,41 @@ public class SpreadsheetActivity extends AppCompatActivity
         _tableLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING | LinearLayout.SHOW_DIVIDER_END | LinearLayout.SHOW_DIVIDER_MIDDLE);
         _tableLayout.setDividerDrawable(new ColorDrawable(Color.GRAY));
         return contentView;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fillSpreadsheet();
+    }
+
+    private void editCell(final int x, final int y) {
+        _editText.setVisibility(View.VISIBLE);
+        _editText.setText(_model[x][y]);
+        _editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if ((keyEvent == null || keyEvent.getAction() == KeyEvent.ACTION_DOWN)
+                        && i == KeyEvent.KEYCODE_ENDCALL) {
+                    _model[x][y] = _editText.getText().toString();
+                    fillSpreadsheet();
+                    _editText.setVisibility(View.INVISIBLE);
+                    return true;
+                }
+                return false;
+            }
+        });
+        _editText.callOnClick();
+    }
+
+    private void fillSpreadsheet() {
+        for (int rowIndex = 0; rowIndex < _tableLayout.getChildCount(); rowIndex++) {
+            TableRow row = (TableRow) _tableLayout.getChildAt(rowIndex);
+            for (int cellIndex = 0; cellIndex < row.getChildCount(); cellIndex++) {
+                TextView cell = (TextView) row.getChildAt(cellIndex);
+                cell.setText(_model[rowIndex][cellIndex]);
+            }
+        }
     }
 
     @Override
