@@ -73,6 +73,14 @@ public class SpreadsheetActivity extends AppCompatActivity
         initializeModel(savedInstanceState);
     }
 
+    /**
+     * If there is a savedInstanceState and it has a saved model, use that.
+     * Otherwise, retrieve model from preferences if it exists.
+     * Otherwise, initialize a new blank 2x2 spreadsheet model.
+     * preferences.
+     *
+     * @param savedInstanceState
+     */
     private void initializeModel(Bundle savedInstanceState) {
         if (savedInstanceState != null && savedInstanceState.containsKey(MODEL_KEY)) {
             _model = SpreadsheetEncoder
@@ -196,15 +204,21 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void clear() {
+        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
+            for (int columnIndex = 0; columnIndex < _model[0].length; columnIndex++) {
+                _model[rowIndex][columnIndex] = "";
+            }
+        }
+        updateView();
+
         Toast.makeText(this, R.string.spreadsheet_cleared, Toast.LENGTH_SHORT).show();
     }
 
     private void reload() {
         _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
-
         updateView();
 
-        Toast.makeText(this, R.string.data_loaded, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.spreadsheet_loaded, Toast.LENGTH_SHORT).show();
     }
 
     private void save() {
