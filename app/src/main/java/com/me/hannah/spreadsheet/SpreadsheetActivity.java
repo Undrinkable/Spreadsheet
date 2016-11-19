@@ -21,16 +21,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Arrays;
+import java.util.Stack;
 
 public class SpreadsheetActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String MODEL_KEY = "Spreadsheet.Model";
+    private static final String EDIT_HISTORY_KEY = "Spreadsheet.EditHistory";
 
     private String[][] _model;
+    private SpreadsheetSaveDataManager _saveDataManager;
+
     private ViewGroup _tableLayout;
     private EditText _editCell;
-    private SpreadsheetSaveDataManager _saveDataManager;
+
+    private Stack<String[][]> _editHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +52,7 @@ public class SpreadsheetActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                reload();
+                undo();
             }
         });
 
@@ -82,14 +87,17 @@ public class SpreadsheetActivity extends AppCompatActivity
      * @param savedInstanceState
      */
     private void initializeModel(Bundle savedInstanceState) {
-        if (savedInstanceState != null && savedInstanceState.containsKey(MODEL_KEY)) {
+        if (savedInstanceState != null) {
             _model = SpreadsheetEncoder
                     .decodeSpreadsheetData(savedInstanceState.getString(MODEL_KEY));
+            _editHistory = (Stack<String[][]>) savedInstanceState.getSerializable(EDIT_HISTORY_KEY);
         } else if (_saveDataManager.hasSavedModel()) {
             _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
-        } else {
-            _model = new String[][]{new String[]{"", ""}, new String[]{"", ""}};
         }
+
+
+        if (_model == null) _model = new String[][]{new String[]{"", ""}, new String[]{"", ""}};
+        if (_editHistory == null) _editHistory = new Stack<>();
     }
 
     @NonNull
@@ -154,6 +162,8 @@ public class SpreadsheetActivity extends AppCompatActivity
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 if ((keyEvent == null || keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
                         i == KeyEvent.KEYCODE_ENDCALL) {
+                    logStateOfModel();
+
                     _model[x][y] = _editCell.getText().toString();
                     fillSpreadsheet();
                     _editCell.setVisibility(View.INVISIBLE);
@@ -204,6 +214,8 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void clear() {
+        logStateOfModel();
+
         for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
             for (int columnIndex = 0; columnIndex < _model[0].length; columnIndex++) {
                 _model[rowIndex][columnIndex] = "";
@@ -215,6 +227,8 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void reload() {
+        logStateOfModel();
+
         _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
         updateView();
 
@@ -227,7 +241,18 @@ public class SpreadsheetActivity extends AppCompatActivity
         Toast.makeText(this, R.string.changes_saved, Toast.LENGTH_SHORT).show();
     }
 
+    private void undo() {
+        if (!_editHistory.empty()) {
+            _model = _editHistory.pop();
+            updateView();
+        } else {
+            Toast.makeText(this, R.string.nothing_to_undo, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void addRow() {
+        logStateOfModel();
+
         String[][] newModel = new String[_model.length + 1][_model[0].length];
         for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
             newModel[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length);
@@ -238,7 +263,17 @@ public class SpreadsheetActivity extends AppCompatActivity
         updateView();
     }
 
+    private void logStateOfModel() {
+        String[][] model = new String[_model.length][_model[0].length];
+        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
+            model[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length);
+        }
+        _editHistory.push(model);
+    }
+
     private void addColumn() {
+        logStateOfModel();
+
         String[][] newModel = new String[_model.length][_model[0].length + 1];
         for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
             newModel[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length + 1);
