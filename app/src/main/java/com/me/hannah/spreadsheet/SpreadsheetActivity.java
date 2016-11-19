@@ -1,6 +1,5 @@
 package com.me.hannah.spreadsheet;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -24,19 +23,21 @@ import android.widget.Toast;
 import java.util.Arrays;
 
 public class SpreadsheetActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,
-        SpreadsheetFragment.OnFragmentInteractionListener {
+        implements NavigationView.OnNavigationItemSelectedListener {
 
-    private String[][] _model = new String[][]{new String[]{"A1", "A2", "A3", "A4"},
-            new String[]{"B1", "B2", "B3", "B4"}, new String[]{"C1", "C2", "C3", "C4"},
-            new String[]{"D1", "D2", "D3", "D4"},};
+    private static final String MODEL_KEY = "Spreadsheet.Model";
+
+    private String[][] _model;
     private ViewGroup _tableLayout;
     private EditText _editCell;
+    private SpreadsheetSaveDataManager _saveDataManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        _saveDataManager = new SpreadsheetSaveDataManager(this);
 
+        initializeModel(savedInstanceState);
         setContentView(inflateView());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -61,6 +62,28 @@ public class SpreadsheetActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(MODEL_KEY, SpreadsheetEncoder.encodeSpreadsheetData(_model));
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        initializeModel(savedInstanceState);
+    }
+
+    private void initializeModel(Bundle savedInstanceState) {
+        if (savedInstanceState != null && savedInstanceState.containsKey(MODEL_KEY)) {
+            _model = SpreadsheetEncoder
+                    .decodeSpreadsheetData(savedInstanceState.getString(MODEL_KEY));
+        } else if (_saveDataManager.hasSavedModel()) {
+            _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
+        } else {
+            _model = new String[][]{new String[]{"", ""}, new String[]{"", ""}};
+        }
+    }
+
     @NonNull
     private View inflateView() {
         View contentView = LayoutInflater.from(this).inflate(R.layout.activity_spreadsheet, null);
@@ -80,7 +103,6 @@ public class SpreadsheetActivity extends AppCompatActivity
 
         _editCell = (EditText) contentView.findViewById(R.id.editText);
         _tableLayout = (TableLayout) contentView.findViewById(R.id.tableLayout);
-        setupTableView();
 
         return contentView;
     }
@@ -113,7 +135,7 @@ public class SpreadsheetActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        fillSpreadsheet();
+        updateView();
     }
 
     private void editCell(final int x, final int y) {
@@ -146,11 +168,6 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri) {
-
-    }
-
-    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -179,15 +196,21 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void clear() {
-        Toast.makeText(this, "Clear pressed", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.spreadsheet_cleared, Toast.LENGTH_SHORT).show();
     }
 
     private void reload() {
-        Toast.makeText(this, "Reload pressed", Toast.LENGTH_SHORT).show();
+        _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
+
+        updateView();
+
+        Toast.makeText(this, R.string.data_loaded, Toast.LENGTH_SHORT).show();
     }
 
     private void save() {
-        Toast.makeText(this, "Save pressed", Toast.LENGTH_SHORT).show();
+        _saveDataManager.saveModelString(SpreadsheetEncoder.encodeSpreadsheetData(_model));
+
+        Toast.makeText(this, R.string.changes_saved, Toast.LENGTH_SHORT).show();
     }
 
     private void addRow() {
@@ -198,8 +221,7 @@ public class SpreadsheetActivity extends AppCompatActivity
         newModel[_model.length] = new String[_model[0].length];
 
         _model = newModel;
-        setupTableView();
-        fillSpreadsheet();
+        updateView();
     }
 
     private void addColumn() {
@@ -208,6 +230,10 @@ public class SpreadsheetActivity extends AppCompatActivity
             newModel[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length + 1);
         }
         _model = newModel;
+        updateView();
+    }
+
+    private void updateView() {
         setupTableView();
         fillSpreadsheet();
     }
