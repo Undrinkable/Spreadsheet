@@ -17,7 +17,7 @@ public class SpreadsheetUnitTest {
                 new String[]{"B1", "B2", "B3", "B4"}, new String[]{"C1", "C2", "C3", "C4"},
                 new String[]{"D1", "D2", "D3", "D4"}};
 
-        assertArrayEquals(SpreadsheetEncoder
-                .decodeSpreadsheetData(SpreadsheetEncoder.encodeSpreadsheetData(input)), input);
+        assertArrayEquals(input, SpreadsheetEncoder
+                .decodeSpreadsheetData(SpreadsheetEncoder.encodeSpreadsheetData(input)));
     }
 }

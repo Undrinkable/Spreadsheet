@@ -1,6 +1,6 @@
 package com.me.hannah.spreadsheet;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import static android.content.Context.MODE_PRIVATE;
@@ -9,28 +9,29 @@ import static android.content.Context.MODE_PRIVATE;
  * Created by hannah on 11/19/16.
  */
 
-public class SpreadsheetSaveDataManager {
+class SpreadsheetSaveDataManager {
 
+    private static final String FILE_NAME = "SpreadsheetPreference.FileName";
     private static final String MODEL_KEY = "SpreadsheetPreference.Model";
-    private Activity _activity;
+    private Context _context;
 
-    public SpreadsheetSaveDataManager(Activity activity) {
-        _activity = activity;
+    SpreadsheetSaveDataManager(Context context) {
+        _context = context;
     }
 
-    public String loadModelString() {
-        SharedPreferences preferences = _activity.getPreferences(MODE_PRIVATE);
+    String loadModelString() {
+        SharedPreferences preferences = _context.getSharedPreferences(FILE_NAME, MODE_PRIVATE);
         return preferences.getString(MODEL_KEY, "");
     }
 
-    public void saveModelString(String modelString) {
-        SharedPreferences preferences = _activity.getPreferences(MODE_PRIVATE);
+    void saveModelString(String modelString) {
+        SharedPreferences preferences = _context.getSharedPreferences(FILE_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(MODEL_KEY, modelString);
         editor.commit();
     }
 
-    public boolean hasSavedModel() {
-        return _activity.getPreferences(MODE_PRIVATE).contains(MODEL_KEY);
+    boolean hasSavedModel() {
+        return _context.getSharedPreferences(FILE_NAME, MODE_PRIVATE).contains(MODEL_KEY);
     }
 }

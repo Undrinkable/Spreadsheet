@@ -23,4 +23,12 @@ public class SpreadsheetInstrumentedTest {
 
         assertEquals("com.me.hannah.spreadsheet", appContext.getPackageName());
     }
+
+    public void testPreferenceSave() {
+        SpreadsheetSaveDataManager manager =
+                new SpreadsheetSaveDataManager(InstrumentationRegistry.getContext());
+        String input = "Example preference string";
+        manager.saveModelString(input);
+        assertEquals(input, manager.loadModelString());
+    }
 }
