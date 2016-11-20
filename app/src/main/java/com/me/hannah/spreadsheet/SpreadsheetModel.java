@@ -65,17 +65,12 @@ class SpreadsheetModel extends ArrayList<ArrayList<String>> {
     }
 
     public void ensureDimensions() {
-        int dimension = size();
+        int width = 0;
         for (List list : this) {
-            if (dimension < list.size()) dimension = list.size();
-        }
-
-        // make sure length and width are dimension
-        while (size() < dimension) {
-            add(emptyStringListOfSize(dimension));
+            if (width < list.size()) width = list.size();
         }
         for (List<String> list : this) {
-            while (list.size() < dimension) {
+            while (list.size() < width) {
                 list.add("");
             }
         }

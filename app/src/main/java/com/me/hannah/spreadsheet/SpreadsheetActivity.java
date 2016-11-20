@@ -35,6 +35,19 @@ public class SpreadsheetActivity extends AppCompatActivity
     private ViewGroup _tableLayout;
     private EditText _editCell;
 
+    static String letterFromNumber(int i) {
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        if (i < 26) {
+            return String.format("%s", alphabet.charAt(i));
+        } else {
+            int firstChar = (i / 26);
+            int secondChar = (i % 26);
+            return String
+                    .format("%s%s", alphabet.charAt(firstChar - 1), alphabet.charAt(secondChar));
+        }
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,23 +140,26 @@ public class SpreadsheetActivity extends AppCompatActivity
     private void setupTableView() {
         _tableLayout.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (int rowIndex = 0; rowIndex < _model.size(); rowIndex++) {
+
+        for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
 
             ViewGroup row =
                     (ViewGroup) inflater.inflate(R.layout.spreadsheet_row, _tableLayout, false);
             _tableLayout.addView(row);
 
-            for (int columnIndex = 0; columnIndex < _model.get(0).size(); columnIndex++) {
+            for (int columnIndex = 0; columnIndex < _model.get(0).size() + 1; columnIndex++) {
                 View cell = inflater.inflate(R.layout.spreadsheet_cell, row, false);
                 row.addView(cell);
 
                 final int x = rowIndex, y = columnIndex;
-                cell.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        editCell(x, y);
-                    }
-                });
+                if (x != 0 && y != 0) {
+                    cell.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            editCell(x - 1, y - 1);
+                        }
+                    });
+                }
 
             }
         }
@@ -259,7 +275,17 @@ public class SpreadsheetActivity extends AppCompatActivity
             TableRow row = (TableRow) _tableLayout.getChildAt(rowIndex);
             for (int cellIndex = 0; cellIndex < row.getChildCount(); cellIndex++) {
                 TextView cell = (TextView) row.getChildAt(cellIndex);
-                cell.setText(_model.get(rowIndex).get(cellIndex));
+                if (rowIndex == 0) {
+                    if (cellIndex > 0) {
+                        cell.setText(letterFromNumber(cellIndex - 1));
+                    }
+                    cell.setBackgroundColor(getResources().getColor(R.color.divider_gray));
+                } else if (cellIndex == 0) {
+                    cell.setText(String.format("%s", rowIndex));
+                    cell.setBackgroundColor(getResources().getColor(R.color.divider_gray));
+                } else {
+                    cell.setText(_model.get(rowIndex - 1).get(cellIndex - 1));
+                }
             }
         }
     }

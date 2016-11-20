@@ -95,4 +95,31 @@ public class SpreadsheetUnitTest {
         assertEquals("", model.get(1).get(1));
     }
 
+    @Test
+    public void test_ensureDimension() {
+        SpreadsheetModel input = new SpreadsheetModel();
+        input.clear();
+
+        input.add(new ArrayList<>(Arrays.asList(new String[]{"A1", "A2"})));
+        input.add(new ArrayList<>(Arrays.asList(new String[]{"B1", "B2", "B3", "B4"})));
+        input.add(new ArrayList<>(Arrays.asList(new String[]{"C1", "C2", "C3", "C4"})));
+
+        int initialRowCount = input.size();
+        input.ensureDimensions();
+        assertEquals(input.get(0).size(), input.get(1).size());
+        assertEquals(initialRowCount, input.size());
+    }
+
+    @Test
+    public void test_columnHeaderLabel() {
+        assertEquals("A", SpreadsheetActivity.letterFromNumber(0));
+        assertEquals("Z", SpreadsheetActivity.letterFromNumber(25));
+        assertEquals("AA", SpreadsheetActivity.letterFromNumber(26));
+        assertEquals("AB", SpreadsheetActivity.letterFromNumber(27));
+        assertEquals("AZ", SpreadsheetActivity.letterFromNumber(51));
+        assertEquals("BA", SpreadsheetActivity.letterFromNumber(52));
+        assertEquals("BZ", SpreadsheetActivity.letterFromNumber(77));
+        assertEquals("CZ", SpreadsheetActivity.letterFromNumber(103));
+    }
+
 }
