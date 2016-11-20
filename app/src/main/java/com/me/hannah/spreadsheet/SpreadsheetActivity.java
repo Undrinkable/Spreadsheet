@@ -20,7 +20,6 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Arrays;
 import java.util.Stack;
 
 public class SpreadsheetActivity extends AppCompatActivity
@@ -29,13 +28,12 @@ public class SpreadsheetActivity extends AppCompatActivity
     private static final String MODEL_KEY = "Spreadsheet.Model";
     private static final String EDIT_HISTORY_KEY = "Spreadsheet.EditHistory";
 
-    private String[][] _model;
+    private SpreadsheetModel _model;
     private SpreadsheetSaveDataManager _saveDataManager;
+    private Stack<SpreadsheetModel> _editHistory;
 
     private ViewGroup _tableLayout;
     private EditText _editCell;
-
-    private Stack<String[][]> _editHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +58,7 @@ public class SpreadsheetActivity extends AppCompatActivity
         ActionBarDrawerToggle toggle =
                 new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open,
                         R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -69,7 +67,8 @@ public class SpreadsheetActivity extends AppCompatActivity
 
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(MODEL_KEY, SpreadsheetEncoder.encodeSpreadsheetData(_model));
+        outState.putSerializable(MODEL_KEY, _model);
+        outState.putSerializable(EDIT_HISTORY_KEY, _editHistory);
     }
 
     @Override
@@ -83,21 +82,23 @@ public class SpreadsheetActivity extends AppCompatActivity
      * Otherwise, retrieve model from preferences if it exists.
      * Otherwise, initialize a new blank 2x2 spreadsheet model.
      * preferences.
-     *
-     * @param savedInstanceState
      */
     private void initializeModel(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
-            _model = SpreadsheetEncoder
-                    .decodeSpreadsheetData(savedInstanceState.getString(MODEL_KEY));
-            _editHistory = (Stack<String[][]>) savedInstanceState.getSerializable(EDIT_HISTORY_KEY);
+            _model = (SpreadsheetModel) savedInstanceState.getSerializable(MODEL_KEY);
+            _editHistory =
+                    (Stack<SpreadsheetModel>) savedInstanceState.getSerializable(EDIT_HISTORY_KEY);
         } else if (_saveDataManager.hasSavedModel()) {
             _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
         }
 
 
-        if (_model == null) _model = new String[][]{new String[]{"", ""}, new String[]{"", ""}};
-        if (_editHistory == null) _editHistory = new Stack<>();
+        if (_model == null) {
+            _model = SpreadsheetModel.blankModel(2);
+        }
+        if (_editHistory == null) {
+            _editHistory = new Stack<>();
+        }
     }
 
     @NonNull
@@ -126,13 +127,13 @@ public class SpreadsheetActivity extends AppCompatActivity
     private void setupTableView() {
         _tableLayout.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
+        for (int rowIndex = 0; rowIndex < _model.size(); rowIndex++) {
 
             ViewGroup row =
                     (ViewGroup) inflater.inflate(R.layout.spreadsheet_row, _tableLayout, false);
             _tableLayout.addView(row);
 
-            for (int columnIndex = 0; columnIndex < _model[0].length; columnIndex++) {
+            for (int columnIndex = 0; columnIndex < _model.get(0).size(); columnIndex++) {
                 View cell = inflater.inflate(R.layout.spreadsheet_cell, row, false);
                 row.addView(cell);
 
@@ -156,16 +157,17 @@ public class SpreadsheetActivity extends AppCompatActivity
 
     private void editCell(final int x, final int y) {
         _editCell.setVisibility(View.VISIBLE);
-        _editCell.setText(_model[x][y]);
+        _editCell.setText(_model.get(x).get(y));
         _editCell.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 if ((keyEvent == null || keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
                         i == KeyEvent.KEYCODE_ENDCALL) {
-                    logStateOfModel();
 
-                    _model[x][y] = _editCell.getText().toString();
+                    logModelState();
+                    _model.get(x).set(y, _editCell.getText().toString());
                     fillSpreadsheet();
+
                     _editCell.setVisibility(View.INVISIBLE);
                     return true;
                 }
@@ -173,16 +175,6 @@ public class SpreadsheetActivity extends AppCompatActivity
             }
         });
         _editCell.callOnClick();
-    }
-
-    private void fillSpreadsheet() {
-        for (int rowIndex = 0; rowIndex < _tableLayout.getChildCount(); rowIndex++) {
-            TableRow row = (TableRow) _tableLayout.getChildAt(rowIndex);
-            for (int cellIndex = 0; cellIndex < row.getChildCount(); cellIndex++) {
-                TextView cell = (TextView) row.getChildAt(cellIndex);
-                cell.setText(_model[rowIndex][cellIndex]);
-            }
-        }
     }
 
     @Override
@@ -214,30 +206,25 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void clear() {
-        logStateOfModel();
-
-        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
-            for (int columnIndex = 0; columnIndex < _model[0].length; columnIndex++) {
-                _model[rowIndex][columnIndex] = "";
-            }
-        }
+        logModelState();
+        _model.clear();
         updateView();
-
         Toast.makeText(this, R.string.spreadsheet_cleared, Toast.LENGTH_SHORT).show();
     }
 
     private void reload() {
-        logStateOfModel();
-
+        logModelState();
         _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
         updateView();
-
         Toast.makeText(this, R.string.spreadsheet_loaded, Toast.LENGTH_SHORT).show();
+    }
+
+    private void logModelState() {
+        _editHistory.push(new SpreadsheetModel(_model));
     }
 
     private void save() {
         _saveDataManager.saveModelString(SpreadsheetEncoder.encodeSpreadsheetData(_model));
-
         Toast.makeText(this, R.string.changes_saved, Toast.LENGTH_SHORT).show();
     }
 
@@ -251,39 +238,29 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void addRow() {
-        logStateOfModel();
-
-        String[][] newModel = new String[_model.length + 1][_model[0].length];
-        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
-            newModel[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length);
-        }
-        newModel[_model.length] = new String[_model[0].length];
-
-        _model = newModel;
+        logModelState();
+        _model.addRow();
         updateView();
     }
 
-    private void logStateOfModel() {
-        String[][] model = new String[_model.length][_model[0].length];
-        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
-            model[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length);
-        }
-        _editHistory.push(model);
-    }
-
     private void addColumn() {
-        logStateOfModel();
-
-        String[][] newModel = new String[_model.length][_model[0].length + 1];
-        for (int rowIndex = 0; rowIndex < _model.length; rowIndex++) {
-            newModel[rowIndex] = Arrays.copyOf(_model[rowIndex], _model[rowIndex].length + 1);
-        }
-        _model = newModel;
+        logModelState();
+        _model.addColumn();
         updateView();
     }
 
     private void updateView() {
         setupTableView();
         fillSpreadsheet();
+    }
+
+    private void fillSpreadsheet() {
+        for (int rowIndex = 0; rowIndex < _tableLayout.getChildCount(); rowIndex++) {
+            TableRow row = (TableRow) _tableLayout.getChildAt(rowIndex);
+            for (int cellIndex = 0; cellIndex < row.getChildCount(); cellIndex++) {
+                TextView cell = (TextView) row.getChildAt(cellIndex);
+                cell.setText(_model.get(rowIndex).get(cellIndex));
+            }
+        }
     }
 }

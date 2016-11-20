@@ -8,15 +8,17 @@ import com.google.gson.Gson;
  * Turns two-dimensional String arrays into a single String and back.
  */
 
-public class SpreadsheetEncoder {
+class SpreadsheetEncoder {
 
-    public static String[][] decodeSpreadsheetData(String modelString) {
-        Gson gson = new Gson();
-        return gson.fromJson(modelString, String[][].class);
-    }
-
-    public static String encodeSpreadsheetData(String[][] model) {
+    static String encodeSpreadsheetData(SpreadsheetModel model) {
         Gson gson = new Gson();
         return gson.toJson(model);
+    }
+
+    static SpreadsheetModel decodeSpreadsheetData(String modelString) {
+        Gson gson = new Gson();
+        SpreadsheetModel model = gson.fromJson(modelString, SpreadsheetModel.class);
+        model.ensureDimensions();
+        return model;
     }
 }

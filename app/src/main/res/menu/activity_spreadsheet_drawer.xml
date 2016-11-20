@@ -4,16 +4,16 @@
     <item
         android:id="@+id/nav_save"
         android:icon="@drawable/ic_menu_save"
-        android:title="Save" />
+        android:title="@string/menu_save" />
 
     <item
         android:id="@+id/nav_clear"
         android:icon="@drawable/ic_menu_clear"
-        android:title="Clear" />
+        android:title="@string/menu_clear" />
 
     <item
         android:id="@+id/nav_reload"
         android:icon="@drawable/ic_menu_refresh"
-        android:title="Reload" />
+        android:title="@string/menu_reload" />
 
 </menu>

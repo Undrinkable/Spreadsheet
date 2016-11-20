@@ -4,14 +4,15 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">Settings</string>
-
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="add_row">Add Row</string>
     <string name="add_column">Add Column</string>
     <string name="spreadsheet_loaded">Spreadsheet loaded</string>
     <string name="changes_saved">Changes saved</string>
     <string name="spreadsheet_cleared">Spreadsheet cleared</string>
     <string name="nothing_to_undo">Nothing to undo</string>
+    <string name="menu_save">Save</string>
+    <string name="menu_clear">Clear</string>
+    <string name="menu_reload">Reload</string>
+    <string name="enter_data">Enter data</string>
 </resources>

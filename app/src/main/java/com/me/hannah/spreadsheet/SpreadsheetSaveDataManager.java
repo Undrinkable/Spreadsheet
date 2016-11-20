@@ -7,13 +7,14 @@ import static android.content.Context.MODE_PRIVATE;
 
 /**
  * Created by hannah on 11/19/16.
+ * Implements the details of saving and loading the spreadsheet data.
  */
 
 class SpreadsheetSaveDataManager {
 
     private static final String FILE_NAME = "SpreadsheetPreference.FileName";
     private static final String MODEL_KEY = "SpreadsheetPreference.Model";
-    private Context _context;
+    private final Context _context;
 
     SpreadsheetSaveDataManager(Context context) {
         _context = context;

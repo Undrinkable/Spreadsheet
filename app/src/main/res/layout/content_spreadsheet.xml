@@ -2,15 +2,15 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/content_spreadsheet"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:divider="@color/grey_400"
+    android:divider="@color/divider_gray"
     android:orientation="vertical"
     android:showDividers="middle"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.me.hannah.spreadsheet.SpreadsheetActivity"
-    tools:showIn="@layout/app_bar_spreadsheet">
+    tools:showIn="@layout/app_bar_spreadsheet"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +25,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:singleLine="true"
-            android:visibility="invisible" />
+            android:visibility="invisible"
+            android:inputType="text"
+            android:hint="@string/enter_data" />
 
         <Button
             android:id="@+id/add_column"
@@ -58,7 +60,7 @@
                 android:id="@+id/tableLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:divider="@color/grey_400"
+                android:divider="@color/divider_gray"
                 android:showDividers="beginning|middle|end" />
         </HorizontalScrollView>
     </ScrollView>
