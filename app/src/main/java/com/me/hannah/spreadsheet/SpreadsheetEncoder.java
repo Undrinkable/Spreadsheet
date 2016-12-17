@@ -18,7 +18,7 @@ class SpreadsheetEncoder {
     static SpreadsheetModel decodeSpreadsheetData(String modelString) {
         Gson gson = new Gson();
         SpreadsheetModel model = gson.fromJson(modelString, SpreadsheetModel.class);
-        model.ensureDimensions();
+        if (model != null) model.ensureDimensions();
         return model;
     }
 }

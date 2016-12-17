@@ -1,6 +1,7 @@
 package com.me.hannah.spreadsheet;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -9,6 +10,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
@@ -110,11 +112,15 @@ public class SpreadsheetActivity extends AppCompatActivity
 
 
         if (_model == null) {
-            _model = SpreadsheetModel.blankModel(2);
+            createNewBlankModel();
         }
         if (_editHistory == null) {
             _editHistory = new Stack<>();
         }
+    }
+
+    private void createNewBlankModel() {
+        _model = SpreadsheetModel.blankModel(2);
     }
 
     @NonNull
@@ -232,11 +238,11 @@ public class SpreadsheetActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_clear) {
-            clear();
+            clearSelected();
         } else if (id == R.id.nav_reload) {
-            reload();
+            reloadSelected();
         } else if (id == R.id.nav_save) {
-            save();
+            saveSelected();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -244,18 +250,65 @@ public class SpreadsheetActivity extends AppCompatActivity
         return true;
     }
 
+    private void saveSelected() {
+        promptForConfirmation("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                save();
+            }
+        });
+    }
+
+    private void reloadSelected() {
+        promptForConfirmation("Reload", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                reload();
+            }
+        });
+    }
+
+    private void clearSelected() {
+        promptForConfirmation("Clear", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                clear();
+            }
+        });
+    }
+
+    private void promptForConfirmation(String title,
+                                       DialogInterface.OnClickListener confirmClickListener) {
+        new AlertDialog.Builder(this).setTitle(title).setMessage("Are you sure?")
+                .setPositiveButton("Yes", confirmClickListener)
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                }).create().show();
+    }
+
     private void clear() {
         logModelState();
         _model.clear();
+        _editHistory.clear();
         updateView();
         Toast.makeText(this, R.string.spreadsheet_cleared, Toast.LENGTH_SHORT).show();
     }
 
+
     private void reload() {
         logModelState();
         _model = SpreadsheetEncoder.decodeSpreadsheetData(_saveDataManager.loadModelString());
-        updateView();
-        Toast.makeText(this, R.string.spreadsheet_loaded, Toast.LENGTH_SHORT).show();
+        if (_model != null) {
+            updateView();
+            Toast.makeText(this, R.string.spreadsheet_loaded, Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "No data to load", Toast.LENGTH_SHORT).show();
+            createNewBlankModel();
+            updateView();
+        }
     }
 
     private void logModelState() {
