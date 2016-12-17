@@ -1,5 +1,6 @@
 package com.me.hannah.spreadsheet;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -25,6 +26,7 @@ class SpreadsheetSaveDataManager {
         return preferences.getString(MODEL_KEY, "");
     }
 
+    @SuppressLint("CommitPrefEdits")
     void saveModelString(String modelString) {
         SharedPreferences preferences = _context.getSharedPreferences(FILE_NAME, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();

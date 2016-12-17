@@ -9,8 +9,7 @@
     android:showDividers="middle"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.me.hannah.spreadsheet.SpreadsheetActivity"
-    tools:showIn="@layout/app_bar_spreadsheet"
-    android:background="@android:color/white">
+    tools:showIn="@layout/app_bar_spreadsheet">
 
     <LinearLayout
         android:layout_width="match_parent"

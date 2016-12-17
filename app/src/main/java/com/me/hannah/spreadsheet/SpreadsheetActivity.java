@@ -40,6 +40,9 @@ public class SpreadsheetActivity extends AppCompatActivity
     private ViewGroup _tableLayout;
     private EditText _editText;
     private View _cellBeingEdited;
+    private LayoutInflater inflater;
+    private LayoutInflater _inflater;
+
 
     static String letterFromNumber(int i) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -57,7 +60,7 @@ public class SpreadsheetActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         _saveDataManager = new SpreadsheetSaveDataManager(this);
-
+        _inflater = LayoutInflater.from(this);
         initializeModel(savedInstanceState);
         setContentView(inflateView());
 
@@ -147,29 +150,57 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void setupTableView() {
-        _tableLayout.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(this);
+        if (_tableLayout.getChildCount() != 0) {
+            updateTableView();
+        } else {
+            createNewTableView();
+        }
+    }
 
-        for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
+    private void updateTableView() {
+        int columnCount = ((ViewGroup) _tableLayout.getChildAt(0)).getChildCount();
+        int rowCount = _tableLayout.getChildCount();
 
-            ViewGroup row =
-                    (ViewGroup) inflater.inflate(R.layout.spreadsheet_row, _tableLayout, false);
-            _tableLayout.addView(row);
-
-            for (int columnIndex = 0; columnIndex < _model.get(0).size() + 1; columnIndex++) {
-                View cell = inflater.inflate(R.layout.spreadsheet_cell, row, false);
-                row.addView(cell);
-
-                final int x = rowIndex, y = columnIndex;
-                if (x != 0 && y != 0) {
-                    cell.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            editCell(view, x - 1, y - 1);
-                        }
-                    });
-                }
+        if (_model.size() + 1 > rowCount) {
+            addRowToTable(rowCount);
+        }
+        if (_model.get(0).size() + 1 > columnCount) {
+            for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
+                addCellToRow(rowIndex, (ViewGroup) _tableLayout.getChildAt(rowIndex), columnCount);
             }
+        }
+        _tableLayout.requestLayout();
+    }
+
+    private void createNewTableView() {
+        _tableLayout.removeAllViews();
+        for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
+            addRowToTable(rowIndex);
+        }
+    }
+
+    private void addRowToTable(int rowIndex) {
+        ViewGroup row =
+                (ViewGroup) _inflater.inflate(R.layout.spreadsheet_row, _tableLayout, false);
+        _tableLayout.addView(row);
+
+        for (int columnIndex = 0; columnIndex < _model.get(0).size() + 1; columnIndex++) {
+            addCellToRow(rowIndex, row, columnIndex);
+        }
+    }
+
+    private void addCellToRow(int rowIndex, ViewGroup row, int columnIndex) {
+        View cell = _inflater.inflate(R.layout.spreadsheet_cell, row, false);
+        row.addView(cell);
+
+        final int x = rowIndex, y = columnIndex;
+        if (x != 0 && y != 0) {
+            cell.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    editCell(view, x - 1, y - 1);
+                }
+            });
         }
     }
 
@@ -251,7 +282,7 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void saveSelected() {
-        promptForConfirmation("Save", new DialogInterface.OnClickListener() {
+        promptForConfirmation(getString(R.string.menu_save), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 save();
@@ -260,28 +291,31 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void reloadSelected() {
-        promptForConfirmation("Reload", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                reload();
-            }
-        });
+        promptForConfirmation(getString(R.string.menu_reload),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        reload();
+                    }
+                });
     }
 
     private void clearSelected() {
-        promptForConfirmation("Clear", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                clear();
-            }
-        });
+        promptForConfirmation(getString(R.string.menu_clear),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        clear();
+                    }
+                });
     }
 
     private void promptForConfirmation(String title,
                                        DialogInterface.OnClickListener confirmClickListener) {
-        new AlertDialog.Builder(this).setTitle(title).setMessage("Are you sure?")
-                .setPositiveButton("Yes", confirmClickListener)
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(this).setTitle(title)
+                .setMessage(R.string.dialog_confirmation_message)
+                .setPositiveButton(android.R.string.yes, confirmClickListener)
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.cancel();
@@ -305,7 +339,7 @@ public class SpreadsheetActivity extends AppCompatActivity
             updateView();
             Toast.makeText(this, R.string.spreadsheet_loaded, Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "No data to load", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.no_data_to_load, Toast.LENGTH_SHORT).show();
             createNewBlankModel();
             updateView();
         }

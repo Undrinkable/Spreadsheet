@@ -15,4 +15,6 @@
     <string name="menu_clear">Clear</string>
     <string name="menu_reload">Reload</string>
     <string name="enter_data">Enter data</string>
+    <string name="no_data_to_load">No data to load</string>
+    <string name="dialog_confirmation_message">Are you sure?</string>
 </resources>
