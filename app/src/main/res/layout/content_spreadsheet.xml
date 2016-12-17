@@ -59,7 +59,7 @@
                 android:id="@+id/tableLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:divider="@android:color/darker_gray"
+                android:divider="@drawable/table_divider"
                 android:showDividers="beginning|middle|end" />
         </HorizontalScrollView>
     </ScrollView>

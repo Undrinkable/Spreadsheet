@@ -150,32 +150,36 @@ public class SpreadsheetActivity extends AppCompatActivity
     }
 
     private void setupTableView() {
-        if (_tableLayout.getChildCount() != 0) {
-            updateTableView();
-        } else {
-            createNewTableView();
-        }
-    }
-
-    private void updateTableView() {
-        int columnCount = ((ViewGroup) _tableLayout.getChildAt(0)).getChildCount();
         int rowCount = _tableLayout.getChildCount();
 
-        if (_model.size() + 1 > rowCount) {
-            addRowToTable(rowCount);
+        int columnCount;
+        if (rowCount == 0) {
+            // if we have to create all new rows, they will be created with the right number of
+            // columns.
+            columnCount = _model.size() + 1;
+        } else {
+            columnCount = ((ViewGroup) _tableLayout.getChildAt(0)).getChildCount();
         }
+
+        // Tear down view if we have more rows or columns than we should have. This could happen if
+        // reloading produces a model that is smaller than the current table view. We wouldn't
+        // expect this to happen several times quickly in a row so we don't have to worry about
+        // the perfomance hit of redrawing the view.
+        if (_model.get(0).size() + 1 < columnCount || _model.size() + 1 < rowCount) {
+            _tableLayout.removeAllViews();
+            rowCount = 0;
+            columnCount = _model.size() + 1;
+        }
+
+        while (_model.size() + 1 > rowCount) {
+            addRowToTable(rowCount);
+            rowCount++;
+        }
+
         if (_model.get(0).size() + 1 > columnCount) {
             for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
                 addCellToRow(rowIndex, (ViewGroup) _tableLayout.getChildAt(rowIndex), columnCount);
             }
-        }
-        _tableLayout.requestLayout();
-    }
-
-    private void createNewTableView() {
-        _tableLayout.removeAllViews();
-        for (int rowIndex = 0; rowIndex < _model.size() + 1; rowIndex++) {
-            addRowToTable(rowIndex);
         }
     }
 

@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableRow xmlns:android="http://schemas.android.com/apk/res/android"
-    android:divider="@android:color/darker_gray"
+    android:divider="@drawable/table_divider"
     android:showDividers="beginning|middle|end" />
