@@ -1,5 +1,7 @@
 package com.me.hannah.spreadsheet;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -14,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -33,7 +36,8 @@ public class SpreadsheetActivity extends AppCompatActivity
     private Stack<SpreadsheetModel> _editHistory;
 
     private ViewGroup _tableLayout;
-    private EditText _editCell;
+    private EditText _editText;
+    private View _cellBeingEdited;
 
     static String letterFromNumber(int i) {
         String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -45,7 +49,6 @@ public class SpreadsheetActivity extends AppCompatActivity
             return String
                     .format("%s%s", alphabet.charAt(firstChar - 1), alphabet.charAt(secondChar));
         }
-
     }
 
     @Override
@@ -131,7 +134,7 @@ public class SpreadsheetActivity extends AppCompatActivity
             }
         });
 
-        _editCell = (EditText) contentView.findViewById(R.id.editText);
+        _editText = (EditText) contentView.findViewById(R.id.editText);
         _tableLayout = (TableLayout) contentView.findViewById(R.id.tableLayout);
 
         return contentView;
@@ -156,11 +159,10 @@ public class SpreadsheetActivity extends AppCompatActivity
                     cell.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            editCell(x - 1, y - 1);
+                            editCell(view, x - 1, y - 1);
                         }
                     });
                 }
-
             }
         }
     }
@@ -171,26 +173,47 @@ public class SpreadsheetActivity extends AppCompatActivity
         updateView();
     }
 
-    private void editCell(final int x, final int y) {
-        _editCell.setVisibility(View.VISIBLE);
-        _editCell.setText(_model.get(x).get(y));
-        _editCell.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+    private void editCell(View cell, final int x, final int y) {
+        _editText.setVisibility(View.VISIBLE);
+        _editText.setText(_model.get(x).get(y));
+        _editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
                 if ((keyEvent == null || keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
                         i == KeyEvent.KEYCODE_ENDCALL) {
-
-                    logModelState();
-                    _model.get(x).set(y, _editCell.getText().toString());
-                    fillSpreadsheet();
-
-                    _editCell.setVisibility(View.INVISIBLE);
+                    doneEditing(x, y);
                     return true;
                 }
                 return false;
             }
         });
-        _editCell.callOnClick();
+        _editText.requestFocus();
+
+        if (_cellBeingEdited != null) unhighlightCell();
+        _cellBeingEdited = cell;
+        highlightCell();
+        showKeyboard();
+    }
+
+    private void highlightCell() {
+        _cellBeingEdited.setBackgroundColor(Color.YELLOW);
+    }
+
+    private void doneEditing(int x, int y) {
+        logModelState();
+        _model.get(x).set(y, _editText.getText().toString());
+        fillSpreadsheet();
+
+        _editText.setVisibility(View.INVISIBLE);
+
+        unhighlightCell();
+        _cellBeingEdited = null;
+
+        hideKeyboard();
+    }
+
+    private void unhighlightCell() {
+        _cellBeingEdited.setBackgroundColor(0);
     }
 
     @Override
@@ -279,14 +302,30 @@ public class SpreadsheetActivity extends AppCompatActivity
                     if (cellIndex > 0) {
                         cell.setText(letterFromNumber(cellIndex - 1));
                     }
-                    cell.setBackgroundColor(getResources().getColor(R.color.divider_gray));
+                    cell.setBackgroundColor(Color.LTGRAY);
                 } else if (cellIndex == 0) {
                     cell.setText(String.format("%s", rowIndex));
-                    cell.setBackgroundColor(getResources().getColor(R.color.divider_gray));
+                    cell.setBackgroundColor(Color.LTGRAY);
                 } else {
                     cell.setText(_model.get(rowIndex - 1).get(cellIndex - 1));
                 }
             }
+        }
+    }
+
+    private void showKeyboard() {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputMethodManager != null) {
+            inputMethodManager.showSoftInput(_editText, 0);
+        }
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputMethodManager != null) {
+            inputMethodManager.hideSoftInputFromWindow(_editText.getWindowToken(), 0);
         }
     }
 }
